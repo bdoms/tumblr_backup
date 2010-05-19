@@ -3,6 +3,7 @@
 import os
 import sys
 import urllib2
+import csv
 
 # extra required packages (StoneSoup is the version for XML)
 from BeautifulSoup import BeautifulStoneSoup
@@ -12,7 +13,7 @@ TUMBLR_URL = ".tumblr.com/api/read"
 
 
 def unescape(s):
-    """ replace Tumblr's escaped characters with one's that make sense for saving in an HTML file """
+    """ replace Tumblr's escaped characters with ones that make sense for saving in an HTML file """
 
     # special character corrections
     s = s.replace(u"\xa0", "&amp;nbsp;")
@@ -26,27 +27,45 @@ def unescape(s):
     return s
 
 
-def savePost(post, header, save_folder):
+def savePost(post, save_folder, header="", use_csv=False, save_file=None):
     """ saves an individual post and any resources for it locally """
+
+    if use_csv:
+        assert save_file, "Must specify a file to save CSV data to."
 
     slug = post["url-with-slug"].rpartition("/")[2]
     date_gmt = post["date-gmt"]
 
-    file_name = os.path.join(save_folder, slug + ".html")
-    f = open(file_name, "w")
+    if use_csv:
+        # only append here to preserve other posts
+        # must be opened in binary mode to avoid line break bugs on Windows
+        f = open(save_file, "ab")
+        writer = csv.writer(f)
+        row = [slug, date_gmt]
+    else:
+        file_name = os.path.join(save_folder, slug + ".html")
+        f = open(file_name, "w")
 
-    # header info which is the same for all posts
-    f.write(header)
-    f.write("<p>" + date_gmt + "</p>")
+        # header info which is the same for all posts
+        f.write(header)
+        f.write("<p>" + date_gmt + "</p>")
 
     if post["type"] == "regular":
-        title = post.find("regular-title").string
-        body = post.find("regular-body").string
+        title = unescape(post.find("regular-title").string)
+        body = unescape(post.find("regular-body").string)
 
-        f.write("<h2>" + title + "</h2>" + unescape(body))
+        if use_csv:
+            row.append(title)
+            row.append(body)
+        else:
+            f.write("<h2>" + title + "</h2>" + body)
+    elif use_csv:
+        # add in blank columns to maintain the correct number
+        row.append('')
+        row.append('')
 
     if post["type"] == "photo":
-        caption = post.find("photo-caption").string
+        caption = unescape(post.find("photo-caption").string)
         image_url = post.find("photo-url", {"max-width": "1280"}).string
 
         image_filename = image_url.rpartition("/")[2] + ".jpg" # the 1280 size doesn't end with an extension strangely
@@ -63,21 +82,44 @@ def savePost(post, header, save_folder):
             image_file.write(image_response.read())
             image_file.close()
 
-        f.write(unescape(caption) + '<img alt="' + unescape(caption) + '" src="images/' + image_filename + '" />')
+        if use_csv:
+            row.append(caption)
+            row.append('images/' + image_filename)
+        else:
+            f.write(caption + '<img alt="' + caption + '" src="images/' + image_filename + '" />')
+    elif use_csv:
+        # add in blank columns to maintain the correct number
+        row.append('')
+        row.append('')
 
     if post["type"] == "quote":
-        quote = post.find("quote-text").string
-        source = post.find("quote-source").string
+        quote = unescape(post.find("quote-text").string)
+        source = unescape(post.find("quote-source").string)
 
-        f.write("<blockquote>" + unescape(quote) + "</blockquote><p>" + unescape(source) + "</p>")
+        if use_csv:
+            row.append(quote)
+            row.append(source)
+        else:
+            f.write("<blockquote>" + quote + "</blockquote><p>" + source + "</p>")
+    elif use_csv:
+        # add in blank columns to maintain the correct number
+        row.append('')
+        row.append('')
 
-    # common footer
-    f.write("</body></html>")
+    if use_csv:
+        writer.writerow(row)
+    else:
+        # common footer
+        f.write("</body></html>")
     f.close()
 
 
-def backup(account):
+def backup(account, use_csv=False):
     """ makes HTML files for every post on a public Tumblr blog account """
+
+    if use_csv:
+        print "CSV mode activated."
+        print "Data will be saved to " + account + "/" + account + ".csv"
 
     print "Getting basic information."
 
@@ -91,14 +133,22 @@ def backup(account):
     response = urllib2.urlopen(url)
     soup = BeautifulStoneSoup(response.read())
 
-    # then collect all the meta information
-    tumblelog = soup.find("tumblelog")
-    title = tumblelog["title"]
-    description = tumblelog.string
+    # if it's a backup to CSV then make sure that we have a file to use
+    if use_csv:
+        save_file = os.path.join(save_folder, account + ".csv")
+        # add the header row
+        f = open(save_file, "w") # erases any existing data
+        f.write("Slug,Date (GMT),Regular Title,Regular Body,Photo Caption,Photo URL,Quote Text,Quote Source\r\n") # 8 columns
+        f.close()
+    else:
+        # collect all the meta information
+        tumblelog = soup.find("tumblelog")
+        title = tumblelog["title"]
+        description = tumblelog.string
 
-    # use it to create a generic header for all posts
-    header = "<html><head><title>" + title + "</title></head><body>"
-    header += "<h1>" + title + "</h1><p>" + unescape(description) + "</p>"
+        # use it to create a generic header for all posts
+        header = "<html><head><title>" + title + "</title></head><body>"
+        header += "<h1>" + title + "</h1><p>" + unescape(description) + "</p>"
 
     # then find the total number of posts
     posts_tag = soup.find("posts")
@@ -119,16 +169,28 @@ def backup(account):
 
         posts = soup.findAll("post")
         for post in posts:
-            savePost(post, header, save_folder)
+            if use_csv:
+                savePost(post, save_folder, use_csv=use_csv, save_file=save_file)
+            else:
+                savePost(post, save_folder, header=header)
 
     print "Backup Complete"
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print "Invalid command line arguments. Please supply the name of your Tumblr account."
-    else:
-        account = sys.argv[1]
-        backup(account)
 
+    account = None
+    use_csv = False
+    if len(sys.argv) > 1:
+        for arg in sys.argv[1:]:
+            if arg.startswith("--"):
+                option, value = arg[2:].split("=")
+                if option == "csv" and value == "true":
+                    use_csv = True
+            else:
+                account = arg
+
+    assert account, "Invalid command line arguments. Please supply the name of your Tumblr account."
+
+    backup(account, use_csv)
 
