@@ -62,7 +62,7 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
             row.append(title)
             row.append(body)
         else:
-            f.write("<h2>" + title + "</h2>" + body)
+            f.write("<h3>" + title + "</h3>" + body)
     elif use_csv:
         # add in blank columns to maintain the correct number
         row.append('')
@@ -110,6 +110,39 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
         row.append('')
         row.append('')
 
+    if post["type"] == "link":
+        link_text = unescape(post.find("link-text").string)
+        link_url = unescape(post.find("link-url").string)
+        link_desc = unescape(post.find("link-description").string)
+
+        if use_csv:
+            row.append(link_text)
+            row.append(link_url)
+            row.append(link_desc)
+        else:
+            f.write('<h3><a href="' + link_url + '">' + link_text + '</a></h3><p>' + link_desc + '</p>')
+    elif use_csv:
+        # add in blank columns to maintain the correct number
+        row.append('')
+        row.append('')
+        row.append('')
+
+    tags = post.findAll("tags")
+    if tags:
+        if use_csv:
+            tags_string = [unescape(tag.string) for tag in tags]
+            tags_joined = "|".join(tags_string)
+            row.append(tags_joined)
+        else:
+            f.write('<h4>Tagged</h4>')
+            f.write('<ul>')
+                for tag in tags:
+                    f.write('<li>' + unescape(tag.string) + '</li>')
+            f.write('</ul>')
+    elif use_csv:
+        # add in blank columns to maintain the correct number
+        row.append('')
+
     if use_csv:
         writer.writerow(row)
     else:
@@ -142,7 +175,7 @@ def backup(account, use_csv=False):
         save_file = os.path.join(save_folder, account + ".csv")
         # add the header row
         f = open(save_file, "w") # erases any existing data
-        f.write("Slug,Date (GMT),Regular Title,Regular Body,Photo Caption,Photo URL,Quote Text,Quote Source\r\n") # 8 columns
+        f.write("Slug,Date (GMT),Regular Title,Regular Body,Photo Caption,Photo URL,Quote Text,Quote Source,Link Text,Link URL,Link Description,Tags\r\n") # 12 columns
         f.close()
     else:
         # collect all the meta information
@@ -152,7 +185,7 @@ def backup(account, use_csv=False):
 
         # use it to create a generic header for all posts
         header = "<html><head><title>" + title + "</title></head><body>"
-        header += "<h1>" + title + "</h1><p>" + unescape(description) + "</p>"
+        header += "<h1>" + title + "</h1><h2>" + unescape(description) + "</h2>"
 
     # then find the total number of posts
     posts_tag = soup.find("posts")
@@ -173,7 +206,6 @@ def backup(account, use_csv=False):
 
         posts = soup.findAll("post")
         for post in posts:
-            print post
             if use_csv:
                 savePost(post, save_folder, use_csv=use_csv, save_file=save_file)
             else:
