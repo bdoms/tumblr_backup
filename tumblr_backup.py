@@ -23,6 +23,9 @@ def unescape(s):
     s = s.replace(u"\xa0", "&amp;nbsp;")
     s = s.replace(u"\xe1", "&amp;aacute;")
 
+    # html entities
+    s = s.replace("&#13;", "\r")
+
     # standard html
     s = s.replace("&lt;", "<")
     s = s.replace("&gt;", ">")
@@ -52,24 +55,36 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
 
         # header info which is the same for all posts
         f.write(header)
-        f.write("<p>" + date_gmt + "</p>")
+        f.write('<p class="timestamp">' + date_gmt + '</p>')
 
     if post["type"] == "regular":
-        title = unescape(post.find("regular-title").string)
-        body = unescape(post.find("regular-body").string)
+        title = ""
+        title_tag = post.find("regular-title")
+        if title_tag:
+            title = unescape(title_tag.string)
+        body = ""
+        body_tag = post.find("regular-body")
+        if body_tag:
+            body = unescape(body_tag.string)
 
         if use_csv:
             row.append(title)
             row.append(body)
         else:
-            f.write("<h3>" + title + "</h3>" + body)
+            if title:
+                f.write("<h3>" + title + "</h3>")
+            if body:
+                f.write(body)
     elif use_csv:
         # add in blank columns to maintain the correct number
         row.append('')
         row.append('')
 
     if post["type"] == "photo":
-        caption = unescape(post.find("photo-caption").string)
+        caption = ""
+        caption_tag = post.find("photo-caption")
+        if caption_tag:
+            caption = unescape(caption_tag.string)
         image_url = post.find("photo-url", {"max-width": "1280"}).string
 
         image_filename = image_url.rpartition("/")[2] + ".jpg" # the 1280 size doesn't end with an extension strangely
@@ -90,44 +105,72 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
             row.append(caption)
             row.append('images/' + image_filename)
         else:
-            f.write(caption + '<img alt="' + caption + '" src="images/' + image_filename + '" />')
+            f.write(caption + '<img alt="' + caption.replace('"', '&quot;') + '" src="images/' + image_filename + '" />')
     elif use_csv:
         # add in blank columns to maintain the correct number
         row.append('')
         row.append('')
 
     if post["type"] == "quote":
-        quote = unescape(post.find("quote-text").string)
-        source = unescape(post.find("quote-source").string)
+        quote = ""
+        quote_tag = post.find("quote-text")
+        if quote_tag:
+            quote = unescape(quote_tag.string)
+        source = ""
+        source_tag = post.find("quote-source")
+        if source_tag:
+            source = unescape(source_tag.string)
 
         if use_csv:
             row.append(quote)
             row.append(source)
         else:
-            f.write("<blockquote>" + quote + "</blockquote><p>" + source + "</p>")
+            if quote:
+                f.write("<blockquote>" + quote + "</blockquote>")
+            if source:
+                f.write('<p class="quotesource">' + source + '</p>')
     elif use_csv:
         # add in blank columns to maintain the correct number
         row.append('')
         row.append('')
 
     if post["type"] == "link":
-        link_text = unescape(post.find("link-text").string)
-        link_url = unescape(post.find("link-url").string)
-        link_desc = unescape(post.find("link-description").string)
+        link_text = ""
+        text_tag = post.find("link-text")
+        if text_tag:
+            link_text = unescape(text_tag.string)
+        link_url = ""
+        url_tag = post.find("link-url")
+        if url_tag:
+            link_url = unescape(url_tag.string)
+        link_desc = ""
+        desc_tag = post.find("link-description")
+        if desc_tag:
+            link_desc = unescape(desc_tag.string)
 
         if use_csv:
             row.append(link_text)
             row.append(link_url)
             row.append(link_desc)
         else:
-            f.write('<h3><a href="' + link_url + '">' + link_text + '</a></h3><p>' + link_desc + '</p>')
+            if link_url or link_text:
+                f.write('<h3>')
+                if link_url:
+                    f.write('<a href="' + link_url + '">')
+                if link_text:
+                    f.write(link_text)
+                if link_url:
+                    f.write('</a>')
+                f.write('</h3>')
+            if link_desc:
+                f.write('<p class="linkdescription">' + link_desc + '</p>')
     elif use_csv:
         # add in blank columns to maintain the correct number
         row.append('')
         row.append('')
         row.append('')
 
-    tags = post.findAll("tags")
+    tags = post.findAll("tag")
     if tags:
         if use_csv:
             tags_string = [unescape(tag.string) for tag in tags]
@@ -136,8 +179,8 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
         else:
             f.write('<h4>Tagged</h4>')
             f.write('<ul>')
-                for tag in tags:
-                    f.write('<li>' + unescape(tag.string) + '</li>')
+            for tag in tags:
+                f.write('<li>' + unescape(tag.string) + '</li>')
             f.write('</ul>')
     elif use_csv:
         # add in blank columns to maintain the correct number
