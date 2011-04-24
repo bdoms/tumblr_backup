@@ -11,3 +11,5 @@ can specify via the command line:
 
     python tumblr_backup.py --csv=true account_name
 
+Note that private accounts requiring authorization are not currently supported.
+

@@ -5,6 +5,10 @@ import sys
 import urllib2
 import csv
 
+# add BeautifulSoup submobule to path
+lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'beautifulsoup')
+sys.path.append(lib_dir)
+
 # extra required packages (StoneSoup is the version for XML)
 from BeautifulSoup import BeautifulStoneSoup
 
@@ -115,7 +119,7 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
 
 
 def backup(account, use_csv=False):
-    """ makes HTML files for every post on a public Tumblr blog account """
+    """ make an HTML file for each post or a single CSV file for all posts on a public Tumblr blog account """
 
     if use_csv:
         print "CSV mode activated."
@@ -169,6 +173,7 @@ def backup(account, use_csv=False):
 
         posts = soup.findAll("post")
         for post in posts:
+            print post
             if use_csv:
                 savePost(post, save_folder, use_csv=use_csv, save_file=save_file)
             else:
