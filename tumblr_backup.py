@@ -15,13 +15,12 @@ from BeautifulSoup import BeautifulStoneSoup
 # Tumblr specific constants
 TUMBLR_URL = ".tumblr.com/api/read"
 
+# configuration variables
+ENCODING = "utf-8"
+
 
 def unescape(s):
     """ replace Tumblr's escaped characters with ones that make sense for saving in an HTML file """
-
-    # special character corrections
-    s = s.replace(u"\xa0", "&amp;nbsp;")
-    s = s.replace(u"\xe1", "&amp;aacute;")
 
     # html entities
     s = s.replace("&#13;", "\r")
@@ -30,6 +29,9 @@ def unescape(s):
     s = s.replace("&lt;", "<")
     s = s.replace("&gt;", ">")
     s = s.replace("&amp;", "&") # this has to be last
+
+    # prepare unicode for writing to a file
+    s = s.encode(ENCODING)
 
     return s
 
@@ -87,7 +89,7 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
             caption = unescape(caption_tag.string)
         image_url = post.find("photo-url", {"max-width": "1280"}).string
 
-        image_filename = image_url.rpartition("/")[2] + ".jpg" # the 1280 size doesn't end with an extension strangely
+        image_filename = image_url.rpartition("/")[2].encode(ENCODING) + ".jpg" # the 1280 size doesn't end with an extension strangely
         image_folder = os.path.join(save_folder, "images")
         if not os.path.exists(image_folder):
             os.mkdir(image_folder)
@@ -227,7 +229,8 @@ def backup(account, use_csv=False):
         description = tumblelog.string
 
         # use it to create a generic header for all posts
-        header = "<html><head><title>" + title + "</title></head><body>"
+        header = '<html><meta http-equiv="content-type" content="text/html; charset=' + ENCODING + '"/>'
+        header += "<head><title>" + title + "</title></head><body>"
         header += "<h1>" + title + "</h1><h2>" + unescape(description) + "</h2>"
 
     # then find the total number of posts
