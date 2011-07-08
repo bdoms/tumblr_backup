@@ -13,7 +13,7 @@ sys.path.append(lib_dir)
 from BeautifulSoup import BeautifulStoneSoup
 
 # Tumblr specific constants
-TUMBLR_URL = ".tumblr.com/api/read"
+TUMBLR_URL = "/api/read"
 
 # configuration variables
 ENCODING = "utf-8"
@@ -225,7 +225,7 @@ def backup(account, use_csv=False, save_folder=None):
         # collect all the meta information
         tumblelog = soup.find("tumblelog")
         title = tumblelog["title"]
-        description = tumblelog.string
+        description = str(tumblelog.string)
 
         # use it to create a generic header for all posts
         header = '<html><meta http-equiv="content-type" content="text/html; charset=' + ENCODING + '"/>'
