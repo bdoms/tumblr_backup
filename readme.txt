@@ -11,5 +11,9 @@ can specify via the command line:
 
     python tumblr_backup.py --csv=true account_name
 
+It is possible to specify an alternate save directory :
+
+    python tumblr_backup.py --save_folder=/path/to/folder account_name
+
 Note that private accounts requiring authorization are not currently supported.
 

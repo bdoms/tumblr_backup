@@ -196,7 +196,7 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
     f.close()
 
 
-def backup(account, use_csv=False):
+def backup(account, use_csv=False, save_folder=None):
     """ make an HTML file for each post or a single CSV file for all posts on a public Tumblr blog account """
 
     if use_csv:
@@ -206,7 +206,6 @@ def backup(account, use_csv=False):
     print "Getting basic information."
 
     # make sure there's a folder to save in
-    save_folder = os.path.join(os.getcwd(), account)
     if not os.path.exists(save_folder):
         os.mkdir(save_folder)
 
@@ -264,16 +263,22 @@ if __name__ == "__main__":
 
     account = None
     use_csv = False
+    save_folder = None
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
             if arg.startswith("--"):
                 option, value = arg[2:].split("=")
                 if option == "csv" and value == "true":
                     use_csv = True
+                if option == "save_folder":
+                    save_folder = value
             else:
                 account = arg
 
     assert account, "Invalid command line arguments. Please supply the name of your Tumblr account."
 
-    backup(account, use_csv)
+    if (save_folder == None):
+        save_folder = os.path.join(os.getcwd(), account)
+
+    backup(account, use_csv, save_folder)
 
