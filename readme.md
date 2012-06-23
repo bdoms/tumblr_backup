@@ -1,4 +1,4 @@
-Copyright &copy; 2009, [Brendan Doms](http://www.bdoms.com/)
+Copyright &copy; 2009, [Brendan Doms](http://www.bdoms.com/)  
 Licensed under the [MIT license](http://www.opensource.org/licenses/MIT)
 
 
@@ -48,7 +48,7 @@ Tumblr has a lot of different types of posts. The ones currently supported by Tu
 
 Tumblr allows you to add "tags" to posts. Tumblr Backup supports tags on any post type by simply
 adding a list of all the tags for a post to the bottom of the page if in HTML mode,
-or as its own pipe (|) separated list if in CSV mode.
+or as its own pipe ( | ) separated list if in CSV mode.
 
 
 ## Notes
