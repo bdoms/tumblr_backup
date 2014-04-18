@@ -1,4 +1,3 @@
-
 # standard Python library imports
 import os
 import sys
@@ -89,7 +88,7 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
             caption = unescape(caption_tag.string)
         image_url = post.find("photo-url", {"max-width": "1280"}).string
 
-        image_filename = image_url.rpartition("/")[2].encode(ENCODING) + ".jpg" # the 1280 size doesn't end with an extension strangely
+        image_filename = image_url.rpartition("/")[2].encode(ENCODING)
         image_folder = os.path.join(save_folder, "images")
         if not os.path.exists(image_folder):
             os.mkdir(image_folder)
