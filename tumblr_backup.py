@@ -55,6 +55,7 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
         f = open(file_name, "w")
 
         # header info which is the same for all posts
+        header = unescape(header)
         f.write(header)
         f.write('<p class="timestamp">' + date_gmt + '</p>')
 
