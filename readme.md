@@ -34,6 +34,11 @@ You can also specify a different directory to save to with the command line opti
 python tumblr_backup.py --save_folder=/path/to/folder example.tumblr.com
 ```
 
+Specify the post number to start from (useful with bad internet connection to continue from the last posts group):
+```bash
+python tumblr_backup.py --start_post=N example.tumblr.com
+```
+
 ## Supported Post Types
 
 Tumblr has a lot of different types of posts. The ones currently supported by Tumblr Backup are:
