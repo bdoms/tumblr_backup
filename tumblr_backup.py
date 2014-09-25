@@ -3,6 +3,7 @@ import os
 import sys
 import urllib2
 import csv
+import codecs
 
 # add BeautifulSoup submobule to path
 lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'beautifulsoup')
@@ -29,9 +30,6 @@ def unescape(s):
     s = s.replace("&gt;", ">")
     s = s.replace("&amp;", "&") # this has to be last
 
-    # prepare unicode for writing to a file
-    s = s.encode(ENCODING)
-
     return s
 
 
@@ -52,10 +50,9 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
         row = [slug, date_gmt]
     else:
         file_name = os.path.join(save_folder, slug + ".html")
-        f = open(file_name, "w")
+        f = codecs.open(file_name, "w", encoding=ENCODING)
 
         # header info which is the same for all posts
-        header = unescape(header)
         f.write(header)
         f.write('<p class="timestamp">' + date_gmt + '</p>')
 
@@ -189,7 +186,8 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
         row.append('')
 
     if use_csv:
-        writer.writerow(row)
+        encoded_row = [cell.encode(ENCODING) for cell in row]
+        writer.writerow(encoded_row)
     else:
         # common footer
         f.write("</body></html>")
@@ -225,7 +223,7 @@ def backup(account, use_csv=False, save_folder=None):
         # collect all the meta information
         tumblelog = soup.find("tumblelog")
         title = tumblelog["title"]
-        description = str(tumblelog.string)
+        description = tumblelog.string
 
         # use it to create a generic header for all posts
         header = '<html><meta http-equiv="content-type" content="text/html; charset=' + ENCODING + '"/>'
