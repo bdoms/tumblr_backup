@@ -196,7 +196,7 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
     f.close()
 
 
-def backup(account, use_csv=False, save_folder=None):
+def backup(account, use_csv=False, save_folder=None, start_post = 0):
     """ make an HTML file for each post or a single CSV file for all posts on a public Tumblr blog account """
 
     if use_csv:
@@ -237,7 +237,7 @@ def backup(account, use_csv=False, save_folder=None):
     total_posts = int(posts_tag["total"])
 
     # then get the XML files from the API, which we can only do with a max of 50 posts at once
-    for i in range(0, total_posts, 50):
+    for i in range(start_post, total_posts, 50):
         # find the upper bound
         j = i + 49
         if j > total_posts:
@@ -264,6 +264,7 @@ if __name__ == "__main__":
     account = None
     use_csv = False
     save_folder = None
+    start_post = 0
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
             if arg.startswith("--"):
@@ -272,6 +273,8 @@ if __name__ == "__main__":
                     use_csv = True
                 if option == "save_folder":
                     save_folder = value
+                if option == "start_post":
+                    start_post = int(value)
             else:
                 account = arg
 
@@ -280,5 +283,5 @@ if __name__ == "__main__":
     if (save_folder == None):
         save_folder = os.path.join(os.getcwd(), account)
 
-    backup(account, use_csv, save_folder)
+    backup(account, use_csv, save_folder, start_post)
 
