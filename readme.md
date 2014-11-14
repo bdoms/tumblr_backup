@@ -2,7 +2,28 @@ Copyright &copy; 2009, [Brendan Doms](http://www.bdoms.com/)
 Licensed under the [MIT license](http://www.opensource.org/licenses/MIT)
 
 
+# Tumblr Backup
+
 Tumblr Backup is a tool for making a local backup of your Tumblr account.
+
+
+## Setup
+
+There is one dependency: version 3 of [Beautiful Soup](http://www.crummy.com/software/BeautifulSoup/).
+If you already have it installed globally then you can grab the single `.py` file and it should work.
+
+Otherwise, the easiest way is to clone the repository with `--recursive` to get all the required submodules automatically:
+
+```bash
+git clone --recursive https://github.com/bdoms/tumblr_backup.git
+```
+
+If you have the code but didn't clone with `--recursive` you can still get the submodules later:
+
+```bash
+git submodule init
+git submodule update
+```
 
 
 ## Use
