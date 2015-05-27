@@ -4,6 +4,7 @@ import sys
 import urllib2
 import csv
 import codecs
+import logging
 
 # add BeautifulSoup submobule to path
 lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'beautifulsoup')
@@ -95,10 +96,20 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
         if not os.path.exists(local_image_path):
             # only download images if they don't already exist
             print "Downloading a photo. This may take a moment."
-            image_response = urllib2.urlopen(image_url)
-            image_file = open(local_image_path, "wb")
-            image_file.write(image_response.read())
-            image_file.close()
+            try:
+                image_response = urllib2.urlopen(image_url)
+                image_file = open(local_image_path, "wb")
+                image_file.write(image_response.read())
+                image_file.close()
+            except urllib2.HTTPError, e:
+                logging.warning('HTTPError = ' + str(e.code))
+            except urllib2.URLError, e:
+                logging.warning('URLError = ' + str(e.reason))
+            except httplib.HTTPException, e:
+                logging.warning('HTTPException')
+            except Exception:
+                import traceback
+                logging.warning('generic exception: ' + traceback.format_exc())
 
         if use_csv:
             row.append(caption)
