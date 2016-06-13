@@ -23,6 +23,9 @@ ENCODING = "utf-8"
 def unescape(s):
     """ replace Tumblr's escaped characters with ones that make sense for saving in an HTML file """
 
+    if s is None:
+        return ""
+
     # html entities
     s = s.replace("&#13;", "\r")
 
