@@ -6,12 +6,8 @@ import csv
 import codecs
 import logging
 
-# add BeautifulSoup submobule to path
-lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'beautifulsoup')
-sys.path.append(lib_dir)
-
-# extra required packages (StoneSoup is the version for XML)
-from BeautifulSoup import BeautifulStoneSoup
+# extra required packages
+from bs4 import BeautifulSoup
 
 # Tumblr specific constants
 TUMBLR_URL = "/api/read"
@@ -251,7 +247,7 @@ def backup(account, use_csv=False, save_folder=None, start_post = 0):
     # start by calling the API with just a single post
     url = "http://" + account + TUMBLR_URL + "?num=1"
     response = urllib2.urlopen(url)
-    soup = BeautifulStoneSoup(response.read())
+    soup = BeautifulSoup(response.read(), features="xml")
 
     # if it's a backup to CSV then make sure that we have a file to use
     if use_csv:
@@ -286,7 +282,7 @@ def backup(account, use_csv=False, save_folder=None, start_post = 0):
 
         url = "http://" + account + TUMBLR_URL + "?num=50&start=" + str(i)
         response = urllib2.urlopen(url)
-        soup = BeautifulStoneSoup(response.read())
+        soup = BeautifulSoup(response.read(), features="xml")
 
         posts = soup.findAll("post")
         for post in posts:
@@ -323,4 +319,3 @@ if __name__ == "__main__":
         save_folder = os.path.join(os.getcwd(), account)
 
     backup(account, use_csv, save_folder, start_post)
-

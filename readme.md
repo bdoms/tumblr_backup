@@ -9,20 +9,13 @@ Tumblr Backup is a tool for making a local backup of your Tumblr account.
 
 ## Setup
 
-There is one dependency: version 3 of [Beautiful Soup](http://www.crummy.com/software/BeautifulSoup/).
+There is one dependency: version 4 of [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/).
 If you already have it installed globally then you can grab the single `.py` file and it should work.
 
-Otherwise, the easiest way is to clone the repository with `--recursive` to get all the required submodules automatically:
+Otherwise, install via pip:
 
 ```bash
-git clone --recursive https://github.com/bdoms/tumblr_backup.git
-```
-
-If you have the code but didn't clone with `--recursive` you can still get the submodules later:
-
-```bash
-git submodule init
-git submodule update
+pip install -r requirements.txt
 ```
 
 
@@ -60,6 +53,7 @@ Specify the post number to start from (useful with bad internet connection to co
 python tumblr_backup.py --start_post=N example.tumblr.com
 ```
 
+
 ## Supported Post Types
 
 Tumblr has a lot of different types of posts. The ones currently supported by Tumblr Backup are:
@@ -83,4 +77,3 @@ Private accounts requiring authentication are not currently supported.
 
 The default encoding is UTF-8. If you wish to change this, you can simply modify or override the
 global `ENCODING` variable.
-
