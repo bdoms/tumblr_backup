@@ -19,6 +19,9 @@ TUMBLR_URL = "/api/read"
 # configuration variables
 ENCODING = "utf-8"
 
+# most filesystems have a limit of 255 bytes per name but we also need room for a '.html' extension
+NAME_MAX_BYTES = 250
+
 
 def unescape(s):
     """ replace Tumblr's escaped characters with ones that make sense for saving in an HTML file """
@@ -37,6 +40,29 @@ def unescape(s):
     return s
 
 
+# based on http://stackoverflow.com/a/13738452
+def utf8_lead_byte(b):
+    """ a utf-8 intermediate byte starts with the bits 10xxxxxx """
+    return (ord(b) & 0xC0) != 0x80
+
+
+def byte_truncate(text):
+    """ if text[max_bytes] is not a lead byte, back up until one is found and truncate before that character """
+    s = text.encode(ENCODING)
+    if len(s) <= NAME_MAX_BYTES:
+        return s
+
+    if ENCODING == "utf-8":
+        lead_byte = utf8_lead_byte
+    else:
+        raise NotImplementedError()
+
+    i = NAME_MAX_BYTES
+    while i > 0 and not lead_byte(s[i]):
+        i -= 1
+    return s[:i]
+
+
 def savePost(post, save_folder, header="", use_csv=False, save_file=None):
     """ saves an individual post and any resources for it locally """
 
@@ -53,6 +79,7 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
         writer = csv.writer(f)
         row = [slug, date_gmt]
     else:
+        slug = byte_truncate(slug)
         file_name = os.path.join(save_folder, slug + ".html")
         f = codecs.open(file_name, "w", encoding=ENCODING)
 
