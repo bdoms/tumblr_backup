@@ -1,10 +1,20 @@
 # standard Python library imports
+import codecs
+import csv
+import logging
 import os
 import sys
-import urllib2
-import csv
-import codecs
-import logging
+
+# handle different python versions
+try:
+    from http.client import HTTPException
+    from urllib.request import urlopen
+    from urllib.error import HTTPError, URLError
+    VERSION = 3
+except ImportError:
+    from httplib import HTTPException
+    from urllib2 import urlopen, HTTPError, URLError
+    VERSION = 2
 
 # extra required packages
 from bs4 import BeautifulSoup
@@ -56,6 +66,7 @@ def byte_truncate(text):
     i = NAME_MAX_BYTES
     while i > 0 and not lead_byte(s[i]):
         i -= 1
+
     return s[:i]
 
 
@@ -70,12 +81,17 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
 
     if use_csv:
         # only append here to preserve other posts
-        # must be opened in binary mode to avoid line break bugs on Windows
-        f = open(save_file, "ab")
+        mode = "a"
+        if VERSION == 2:
+            # must be opened in binary mode to avoid line break bugs on Windows
+            mode += "b"
+        f = open(save_file, mode)
         writer = csv.writer(f)
         row = [slug, date_gmt]
     else:
         slug = byte_truncate(slug)
+        if VERSION == 3:
+            slug = slug.decode(ENCODING)
         file_name = os.path.join(save_folder, slug + ".html")
         f = codecs.open(file_name, "w", encoding=ENCODING)
 
@@ -113,7 +129,9 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
             caption = unescape(caption_tag.string)
         image_url = post.find("photo-url", {"max-width": "1280"}).string
 
-        image_filename = image_url.rpartition("/")[2].encode(ENCODING)
+        image_filename = image_url.rpartition("/")[2]
+        if VERSION == 2:
+            image_filename = image_filename.encode(ENCODING)
         image_folder = os.path.join(save_folder, "images")
         if not os.path.exists(image_folder):
             os.mkdir(image_folder)
@@ -121,17 +139,17 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
 
         if not os.path.exists(local_image_path):
             # only download images if they don't already exist
-            print "Downloading a photo. This may take a moment."
+            print("Downloading a photo. This may take a moment.")
             try:
-                image_response = urllib2.urlopen(image_url)
+                image_response = urlopen(image_url)
                 image_file = open(local_image_path, "wb")
                 image_file.write(image_response.read())
                 image_file.close()
-            except urllib2.HTTPError, e:
+            except HTTPError as e:
                 logging.warning('HTTPError = ' + str(e.code))
-            except urllib2.URLError, e:
+            except URLError as e:
                 logging.warning('URLError = ' + str(e.reason))
-            except httplib.HTTPException, e:
+            except HTTPException as e:
                 logging.warning('HTTPException')
             except Exception:
                 import traceback
@@ -223,7 +241,7 @@ def savePost(post, save_folder, header="", use_csv=False, save_file=None):
         row.append('')
 
     if use_csv:
-        encoded_row = [cell.encode(ENCODING) for cell in row]
+        encoded_row = [cell.encode(ENCODING) if VERSION == 2 else cell for cell in row]
         writer.writerow(encoded_row)
     else:
         # common footer
@@ -235,10 +253,10 @@ def backup(account, use_csv=False, save_folder=None, start_post = 0):
     """ make an HTML file for each post or a single CSV file for all posts on a public Tumblr blog account """
 
     if use_csv:
-        print "CSV mode activated."
-        print "Data will be saved to " + account + "/" + account + ".csv"
+        print("CSV mode activated.")
+        print("Data will be saved to " + account + "/" + account + ".csv")
 
-    print "Getting basic information."
+    print("Getting basic information.")
 
     # make sure there's a folder to save in
     if not os.path.exists(save_folder):
@@ -246,7 +264,7 @@ def backup(account, use_csv=False, save_folder=None, start_post = 0):
 
     # start by calling the API with just a single post
     url = "http://" + account + TUMBLR_URL + "?num=1"
-    response = urllib2.urlopen(url)
+    response = urlopen(url)
     soup = BeautifulSoup(response.read(), features="xml")
 
     # if it's a backup to CSV then make sure that we have a file to use
@@ -278,10 +296,10 @@ def backup(account, use_csv=False, save_folder=None, start_post = 0):
         if j > total_posts:
             j = total_posts
 
-        print "Getting posts " + str(i) + " to " + str(j) + "."
+        print("Getting posts " + str(i) + " to " + str(j) + ".")
 
         url = "http://" + account + TUMBLR_URL + "?num=50&start=" + str(i)
-        response = urllib2.urlopen(url)
+        response = urlopen(url)
         soup = BeautifulSoup(response.read(), features="xml")
 
         posts = soup.findAll("post")
@@ -291,7 +309,7 @@ def backup(account, use_csv=False, save_folder=None, start_post = 0):
             else:
                 savePost(post, save_folder, header=header)
 
-    print "Backup Complete"
+    print("Backup Complete")
 
 
 if __name__ == "__main__":
