@@ -19,6 +19,12 @@ except ImportError:
 # extra required packages
 from bs4 import BeautifulSoup
 
+try:
+    import lxml
+    PARSER = "lxml"
+except ImportError:
+    PARSER = "html.parser"
+
 # Tumblr specific constants
 TUMBLR_URL = "/api/read"
 
@@ -265,7 +271,7 @@ def backup(account, use_csv=False, save_folder=None, start_post = 0):
     # start by calling the API with just a single post
     url = "http://" + account + TUMBLR_URL + "?num=1"
     response = urlopen(url)
-    soup = BeautifulSoup(response.read(), features="xml")
+    soup = BeautifulSoup(response.read(), PARSER)
 
     # if it's a backup to CSV then make sure that we have a file to use
     if use_csv:
@@ -300,7 +306,7 @@ def backup(account, use_csv=False, save_folder=None, start_post = 0):
 
         url = "http://" + account + TUMBLR_URL + "?num=50&start=" + str(i)
         response = urlopen(url)
-        soup = BeautifulSoup(response.read(), features="xml")
+        soup = BeautifulSoup(response.read(), PARSER)
 
         posts = soup.findAll("post")
         for post in posts:

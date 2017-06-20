@@ -18,6 +18,13 @@ Otherwise, install via pip:
 pip install -r requirements.txt
 ```
 
+### Parsers
+
+This script is capable of using the default parser included with Python, `html.parser`.
+However, it will use the faster `lxml` libary if it can be imported.
+See [the BeautifulSoup docs](https://www.crummy.com/software/BeautifulSoup/bs4/doc/#installing-a-parser)
+for details and the pros and cons of each.
+
 
 ## Use
 
